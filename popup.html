@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proscom Prix 2026 - Cadeauette TN</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <!-- En-tête -->
+    <header class="app-header">
+        <div class="brand-row">
+            <div class="brand-info">
+                <div class="brand-icon">P</div>
+                <div>
+                    <div class="brand-title">Proscom 2026</div>
+                    <div class="brand-subtitle">Cadeauette TN • Tarifs & Devis</div>
+                </div>
+            </div>
+            <div class="header-badges">
+                <span class="badge-pill" id="totalItemsBadge">482 articles</span>
+                <span class="badge-pill accent clickable" id="currentMarginBadge" title="Marge revendeur active (cliquez pour modifier)">+0%</span>
+            </div>
+        </div>
+
+        <!-- Navigation par onglets -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="searchTab">
+                <span>🔍 Catalogue</span>
+            </button>
+            <button class="tab-btn" data-tab="cartTab">
+                <span>📋 Devis</span>
+                <span class="tab-count" id="cartCountBadge" style="display:none;">0</span>
+            </button>
+            <button class="tab-btn" data-tab="favTab">
+                <span>⭐ Favoris</span>
+                <span class="tab-count" id="favCountBadge" style="display:none;">0</span>
+            </button>
+            <button class="tab-btn" data-tab="settingsTab">
+                <span>⚙️ Réglages</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- ONGLET 1 : RECHERCHE / CATALOGUE -->
+    <main id="searchTab" class="panel active">
+        <!-- Barre de recherche -->
+        <div class="search-box">
+            <div class="search-icon-wrapper">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <input type="text" id="searchInput" class="search-input" placeholder="Ex: 24, 202-26, stylo, coffret..." autofocus autocomplete="off">
+            <button id="clearSearchBtn" class="clear-search-btn" title="Effacer la recherche">×</button>
+        </div>
+
+        <!-- Filtres catégories défilables -->
+        <div id="categoryContainer" class="category-scroll">
+            <button class="cat-pill active" data-cat="ALL">Tous</button>
+            <!-- Rempli dynamiquement -->
+        </div>
+
+        <!-- Barre interactive de détection de page PDF en cours -->
+        <div id="pdfDetectorBar" class="pdf-detector-bar" style="display: none;">
+            <div class="detector-left">
+                <span class="detector-dot"></span>
+                <span class="detector-icon">📄</span>
+                <div class="detector-labels">
+                    <span class="detector-title" id="pdfDetectorTitle">Page PDF active : Page ...</span>
+                    <span class="detector-sub" id="pdfDetectorSub">Articles correspondants affichés en premier</span>
+                </div>
+            </div>
+            <div class="detector-controls">
+                <button id="pdfPrevPageBtn" class="page-nav-btn" title="Page précédente">◀</button>
+                <input type="number" id="pdfPageInput" class="page-num-input" min="1" max="174" placeholder="Page" title="Numéro de page du catalogue (1 à 174)">
+                <button id="pdfNextPageBtn" class="page-nav-btn" title="Page suivante">▶</button>
+                <button id="pdfResetFilterBtn" class="page-reset-btn" title="Réinitialiser le filtre de page">✕</button>
+            </div>
+        </div>
+
+        <!-- Avertissement si PDF local sans permission Chrome -->
+        <div id="fileAccessWarning" class="file-access-warning" style="display: none;">
+            <span class="file-warning-icon">⚠️</span>
+            <div class="file-warning-text">
+                <strong>PDF Local détecté :</strong> Pour la détection automatique, activez <em>« Autoriser l'accès aux URL de fichiers »</em> dans Chrome.
+            </div>
+            <button id="openExtensionSettingsBtn" class="file-warning-btn" title="Ouvrir les détails de l'extension">Activer</button>
+        </div>
+
+        <!-- Raccourcis rapides de chapitres catalogue -->
+        <div id="pdfQuickPages" class="pdf-quick-pages" style="display: none;">
+            <span class="quick-title">Aller à :</span>
+            <button class="quick-chip" data-page="2">🥤 Thermos p.2</button>
+            <button class="quick-chip" data-page="14">🎁 Coffrets p.14</button>
+            <button class="quick-chip" data-page="32">📓 Carnets p.32</button>
+            <button class="quick-chip" data-page="50">🖊️ Stylos p.50</button>
+            <button class="quick-chip" data-page="64">🔋 High-Tech p.64</button>
+            <button class="quick-chip" data-page="100">🎒 Sacs p.100</button>
+            <button class="quick-chip" data-page="142">🏆 Trophées p.142</button>
+            <button class="quick-chip" data-page="161">🏷️ Promos p.161</button>
+        </div>
+
+        <!-- Bannière sélection auto détectée -->
+        <div id="autoSearchBanner" class="info-banner" style="display: none;">
+            <span id="autoSearchText">Recherche auto :</span>
+            <button id="closeBannerBtn" style="background:none; border:none; color:inherit; cursor:pointer; font-weight:bold;">✕</button>
+        </div>
+
+        <!-- Méta résultats et Tri -->
+        <div class="results-meta">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span id="resultsCount">Tapez une référence ou un mot-clé...</span>
+                <button id="togglePdfBarBtn" class="pill-page-btn" title="Filtrer par page du catalogue papier / PDF">📄 Page PDF</button>
+            </div>
+            <select id="sortSelect" class="sort-select">
+                <option value="relevance">Pertinence</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+                <option value="ref">Par Référence</option>
+            </select>
+        </div>
+
+        <!-- Conteneur des fiches produits -->
+        <div id="results" class="results-list"></div>
+    </main>
+
+    <!-- ONGLET 2 : DEVIS & PANIER RAPIDE -->
+    <section id="cartTab" class="panel">
+        <!-- Statut de persistance permanente -->
+        <div class="cart-storage-status">
+            <span class="status-dot"></span>
+            <span>Sauvegardé automatiquement • Conservé jusqu'à suppression manuelle</span>
+        </div>
+
+        <!-- Référence Client / Dossier -->
+        <div class="cart-client-bar">
+            <label for="cartClientInput">Client / Dossier :</label>
+            <input type="text" id="cartClientInput" class="cart-client-input" placeholder="Ex: Société ABC, Cadeaux fin d'année..." autocomplete="off">
+        </div>
+
+        <div class="results-meta">
+            <span id="cartCountTitle">Articles sélectionnés (0)</span>
+            <button id="clearCartBtn" class="btn-sm btn-secondary" title="Supprimer manuellement tous les articles du devis">Tout vider</button>
+        </div>
+
+        <!-- Boîte de confirmation sécurisée intégrée (évite la fermeture du popup) -->
+        <div id="clearConfirmBox" class="clear-confirm-box" style="display: none;">
+            <div class="confirm-message">⚠️ Supprimer définitivement l'ensemble de ce devis ?</div>
+            <div class="confirm-actions">
+                <button id="confirmClearCartBtn" class="btn-sm btn-danger">Oui, tout vider</button>
+                <button id="cancelClearCartBtn" class="btn-sm btn-secondary">Annuler</button>
+            </div>
+        </div>
+
+        <div id="cartItemsList" class="cart-items-list">
+            <div class="cart-empty">
+                <div class="empty-icon">📋</div>
+                <div>Votre devis est vide.</div>
+                <div style="font-size:11px; margin-top:4px; color:var(--text-muted);">
+                    Cliquez sur <strong>+ Devis</strong> sur n'importe quel article du catalogue.
+                </div>
+            </div>
+        </div>
+
+        <!-- Boîte de calcul du devis -->
+        <div id="cartTotalBox" class="cart-total-box" style="display: none;">
+            <div class="cart-total-row">
+                <span>Total Catalogue HT :</span>
+                <span id="cartTotalBrutHT">0,000 DT</span>
+            </div>
+            <div class="cart-total-row resale" id="cartMarginRow" style="display:none;">
+                <span id="cartMarginLabel">Marge revendeur (+0%) :</span>
+                <span id="cartTotalResaleHT">0,000 DT</span>
+            </div>
+            <div class="cart-total-row">
+                <span id="cartTvaLabel">TVA (19%) :</span>
+                <span id="cartTotalTVA">0,000 DT</span>
+            </div>
+            <div class="cart-total-row strong">
+                <span>TOTAL TTC :</span>
+                <span id="cartTotalTTC">0,000 DT</span>
+            </div>
+        </div>
+
+        <button id="copyQuoteBtn" class="btn-sm btn-accent" style="width:100%; justify-content:center; padding:9px; font-size:12px; display:none;">
+            📋 Copier le Devis complet pour Client
+        </button>
+    </section>
+
+    <!-- ONGLET 3 : FAVORIS -->
+    <section id="favTab" class="panel">
+        <div class="results-meta">
+            <span id="favCountTitle">0 article(s) favori(s)</span>
+        </div>
+        <div id="favResults" class="results-list">
+            <div class="fav-empty">
+                <div class="empty-icon">⭐</div>
+                <div>Aucun favori enregistré.</div>
+                <div style="font-size:11px; margin-top:4px; color:var(--text-muted);">
+                    Cliquez sur l'étoile d'un produit pour l'ajouter à vos favoris permanents.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ONGLET 4 : RÉGLAGES & MARGES -->
+    <section id="settingsTab" class="panel">
+        <!-- Statut de persistance permanente de la marge -->
+        <div class="cart-storage-status" style="margin-bottom:12px;">
+            <span class="status-dot"></span>
+            <span>Marge et TVA conservées en mémoire jusqu'à modification manuelle</span>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-title">💼 Marge Commerciale Revendeur</div>
+            <div class="setting-row">
+                <label for="marginInput">Taux de marge (%):</label>
+                <input type="number" id="marginInput" class="setting-input" min="0" max="200" step="1" value="0">
+            </div>
+            <div class="setting-desc">
+                Applique une marge bénéficiaire (ex: +25%) sur le prix catalogue HT pour afficher votre prix de vente client.
+            </div>
+            <div class="setting-row" style="margin-top:10px;">
+                <label for="showResalePriceToggle">Afficher le prix conseillé :</label>
+                <input type="checkbox" id="showResalePriceToggle" checked>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-title">📊 Paramètres Fiscaux</div>
+            <div class="setting-row">
+                <label for="tvaInput">Taux TVA par défaut (%):</label>
+                <input type="number" id="tvaInput" class="setting-input" min="0" max="100" step="1" value="19">
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-title">🎨 Apparence</div>
+            <div class="setting-row">
+                <label for="darkModeToggle">Mode Sombre :</label>
+                <input type="checkbox" id="darkModeToggle">
+            </div>
+        </div>
+
+        <button id="saveSettingsBtn" class="btn-sm btn-accent" style="width:100%; justify-content:center; padding:8px;">
+            Enregistrer les préférences
+        </button>
+    </section>
+
+    <!-- Toast de notification -->
+    <div id="toast" class="toast toast-success">
+        <span id="toastIcon">✓</span>
+        <span id="toastMessage">Copié dans le presse-papier !</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="produits.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
